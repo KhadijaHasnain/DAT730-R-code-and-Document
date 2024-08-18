@@ -1,0 +1,127 @@
+```{r}
+# Load necessary libraries
+library(dplyr)
+library(ggplot2)
+library(viridis)
+
+# Load the dataset
+data <- read.csv("SYB66_246_202310_Population Growth, Fertility and Mortality Indicators.csv", stringsAsFactors = FALSE)
+
+# Inspect the data structure
+colnames(data)
+str(data)
+
+# Rename columns to more meaningful names
+data <- data %>%
+  rename(
+    Region_Country_Area = T03,
+    Year = X,
+    Series = X.1,
+    Value = X.2,
+    Footnotes = X.3,
+    Source = X.4
+  )
+
+# Filter the data to keep only relevant columns
+data_filtered <- data %>%
+  select(Region_Country_Area, Year, Series, Value)
+
+# Convert Year and Value columns to numeric
+data_filtered$Year <- as.numeric(data_filtered$Year)
+data_filtered$Value <- as.numeric(data_filtered$Value)
+
+# Check for missing values
+sum(is.na(data_filtered))
+
+# Remove rows with NA values
+data_filtered <- na.omit(data_filtered)
+
+# Analyze and visualize data
+
+# 1. Line Graph for Population Annual Rate of Increase (percent)
+population_rate <- data_filtered %>%
+  filter(Series == "Population annual rate of increase (percent)")
+
+ggplot(population_rate, aes(x = Year, y = Value, color = Region_Country_Area)) +
+  geom_line(size = 1) +
+  labs(title = "Population Annual Rate of Increase by Region/Country/Area",
+       x = "Year", y = "Annual Rate of Increase (%)") +
+  theme_minimal()
+
+# 2. Bar Chart for Total Fertility Rate (children per woman)
+fertility_rate <- data_filtered %>%
+  filter(Series == "Total fertility rate (children per women)")
+
+ggplot(fertility_rate, aes(x = Year, y = Value, fill = as.factor(Year))) +
+  geom_bar(stat = "identity") +
+  labs(title = "Total Fertility Rate (Children per Woman) by Year",
+       x = "Year", y = "Fertility Rate (Children per Woman)") +
+  theme_minimal()
+
+# 3. Column Chart for Infant Mortality Rate (per 1,000 live births)
+infant_mortality <- data_filtered %>%
+  filter(Series == "Infant mortality for both sexes (per 1,000 live births)")
+
+ggplot(infant_mortality, aes(x = Year, y = Value, fill = Region_Country_Area)) +
+  geom_col(position = "dodge") +
+  labs(title = "Infant Mortality Rate by Region/Country/Area",
+       x = "Year", y = "Infant Mortality Rate (per 1,000 live births)") +
+  theme_minimal()
+
+# 4. Line Graph for Maternal Mortality Ratio (deaths per 100,000 population)
+maternal_mortality <- data_filtered %>%
+  filter(Series == "Maternal mortality ratio (deaths per 100,000 population)")
+
+ggplot(maternal_mortality, aes(x = Year, y = Value, color = Region_Country_Area)) +
+  geom_line(size = 1) +
+  labs(title = "Maternal Mortality Ratio by Region/Country/Area",
+       x = "Year", y = "Maternal Mortality Ratio (deaths per 100,000 population)") +
+  theme_minimal()
+
+# 5. Line Graph for Life Expectancy at Birth for Both Sexes (years)
+life_expectancy <- data_filtered %>%
+  filter(Series == "Life expectancy at birth for both sexes (years)")
+
+ggplot(life_expectancy, aes(x = Year, y = Value, color = Region_Country_Area)) +
+  geom_line(size = 1) +
+  labs(title = "Life Expectancy at Birth (Both Sexes) by Region/Country/Area",
+       x = "Year", y = "Life Expectancy at Birth (years)") +
+  theme_minimal()
+
+# 6. Scatter Plot for Life Expectancy vs. Total Fertility Rate
+# Ensure data is filtered for the same set of years and countries
+combined_data <- data_filtered %>%
+  filter(Series %in% c("Life expectancy at birth for both sexes (years)",
+                       "Total fertility rate (children per women)")) %>%
+  spread(Series, Value)
+
+ggplot(combined_data, aes(x = `Total fertility rate (children per women)`, 
+                          y = `Life expectancy at birth for both sexes (years)`,
+                          color = Region_Country_Area)) +
+  geom_point() +
+  labs(title = "Life Expectancy vs. Total Fertility Rate",
+       x = "Total Fertility Rate (Children per Woman)", 
+       y = "Life Expectancy at Birth (Years)") +
+  theme_minimal()
+
+# 7. Heatmap for Infant Mortality Rate across Years and Regions
+heatmap_data <- infant_mortality %>%
+  group_by(Region_Country_Area, Year) %>%
+  summarize(Value = mean(Value, na.rm = TRUE))
+
+ggplot(heatmap_data, aes(x = Year, y = Region_Country_Area, fill = Value)) +
+  geom_tile() +
+  scale_fill_viridis() +
+  labs(title = "Heatmap of Infant Mortality Rate",
+       x = "Year", y = "Region/Country/Area", fill = "Infant Mortality Rate") +
+  theme_minimal()
+
+# 8. Bar Chart for Maternal Mortality Ratio by Region/Country/Area
+ggplot(maternal_mortality, aes(x = Year, y = Value, fill = Region_Country_Area)) +
+  geom_bar(stat = "identity", position = "dodge") +
+  labs(title = "Maternal Mortality Ratio by Region/Country/Area",
+       x = "Year", y = "Maternal Mortality Ratio (deaths per 100,000 population)") +
+  theme_minimal()
+
+```
+
